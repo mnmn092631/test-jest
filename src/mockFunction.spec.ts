@@ -2,19 +2,31 @@ import { obj } from "./mockFunction";
 
 let spyFn;
 
-test("obj.minus 함수가 1번 호출되었다(spy 삽입)", () => {
-  spyFn = jest.spyOn(obj, "minus");
-  const result = obj.minus(1, 2);
-  expect(obj.minus).toHaveBeenCalledTimes(1);
-  expect(result).toBe(-1);
-});
+describe("beforeEach/afterEach 적용", () => {
+  test("obj.minus 함수가 1번 호출되었다(spy 삽입)", () => {
+    spyFn = jest.spyOn(obj, "minus");
+    const result = obj.minus(1, 2);
+    expect(obj.minus).toHaveBeenCalledTimes(1);
+    expect(result).toBe(-1);
+  });
 
-test("obj.minus에 스파이를 심고 실행도 안되게", () => {
-  // obj.minus가 빈 함수(() => {})가 되어버림
-  spyFn = jest.spyOn(obj, "minus").mockImplementation();
-  const result = obj.minus(1, 2); // undefined
-  expect(obj.minus).toHaveBeenCalledTimes(1);
-  expect(result).not.toBe(-1);
+  test("obj.minus에 스파이를 심고 실행도 안되게", () => {
+    // obj.minus가 빈 함수(() => {})가 되어버림
+    spyFn = jest.spyOn(obj, "minus").mockImplementation();
+    const result = obj.minus(1, 2); // undefined
+    expect(obj.minus).toHaveBeenCalledTimes(1);
+    expect(result).not.toBe(-1);
+  });
+
+  beforeEach(() => {
+    console.log("각 테스트 전에 실행");
+  });
+
+  afterEach(() => {
+    console.log("각 테스트 후에 실행");
+    // spyFn.mockRestore();
+    jest.restoreAllMocks();
+  });
 });
 
 test("obj.minus에 스파이를 심고 리턴값을 바꾸게(mockImplementation)", () => {
@@ -84,16 +96,6 @@ test("obj.minus에 스파이를 심고 리턴값이 다르게 나오게(mockRetu
 
 beforeAll(() => {
   console.log("이 파일의 준비사항 실행");
-});
-
-beforeEach(() => {
-  console.log("각 테스트 전에 실행");
-});
-
-afterEach(() => {
-  console.log("각 테스트 후에 실행");
-  // spyFn.mockRestore();
-  jest.restoreAllMocks();
 });
 
 afterAll(() => {
