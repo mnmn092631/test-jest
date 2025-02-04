@@ -1,4 +1,6 @@
 import { obj } from "./module";
+import axios from "axios";
+jest.mock("axios");
 
 // jest.mock은 호이스팅 됨
 // 모듈로 불러온 객체의 메서드 전부에 spy를 삽입한 것
@@ -25,4 +27,8 @@ test("모듈을 전부 모킹", () => {
 // 모듈에 있는 속성만 모킹
 test("모듈에 있는 속성만 모킹", () => {
   jest.replaceProperty(obj, "prop", "replaced");
+});
+
+test("axios를 전부 모킹", () => {
+  console.log(axios);
 });
