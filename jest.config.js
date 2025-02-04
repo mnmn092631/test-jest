@@ -2,6 +2,8 @@
 export default {
   testEnvironment: "node",
   transform: {
-    "^.+.tsx?$": ["ts-jest",{}],
+    "^.+.tsx?$": ["ts-jest", {}],
   },
+  rootDir: "src",
+  setupFilesAfterEnv: ["./testSetup.js"],
 };

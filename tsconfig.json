@@ -1,0 +1,6 @@
+{
+  "compilerOptions": {
+    "types": ["jest", "jest-extended"]
+  },
+  "include": ["global.d.ts", "**/*.spec.ts"]
+}
