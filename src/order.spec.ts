@@ -31,3 +31,18 @@ test("first -> second -> third(jest-extended)", () => {
   expect(spy1).toHaveBeenCalledBefore(spy2);
   expect(spy3).toHaveBeenCalledAfter(spy2);
 });
+
+test("인수의 일부 테스트", () => {
+  const fn = jest.fn();
+  fn({
+    a: {
+      b: {
+        c: "hello",
+      },
+      d: "bye",
+    },
+    e: ["f"],
+  });
+  // 인수로 넘긴 객체 중 가장 중요한 속성 하나만 테스트
+  expect(fn.mock.calls[0][0].a.b.c).toBe("hello");
+});
