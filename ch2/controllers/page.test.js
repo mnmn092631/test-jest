@@ -7,6 +7,7 @@ const {
   renderHashtag,
 } = require("./page");
 const { Post } = require("../models");
+const { Hashtag } = require("../models/__mocks__");
 
 it("rendersProfile은 res.render profile을 호출해야 한다", () => {
   const res = { render: jest.fn() };
@@ -55,7 +56,7 @@ describe("renderMain", () => {
   });
 });
 
-describe("renderHashtag", async () => {
+describe("renderHashtag", () => {
   it("hashtag 쿼리스트링이 없으면 /로 돌려보낸다", async () => {
     const res = {
       render: jest.fn(),
@@ -63,9 +64,60 @@ describe("renderHashtag", async () => {
     };
     const next = jest.fn();
 
-    await renderHashtag({ query: {} }, {}, () => {});
+    await renderHashtag({ query: {} }, res, () => {});
     expect(res.render).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
     expect(res.redirect).toHaveBeenCalledWith("/");
+  });
+
+  it("hashtag 쿼리스트링이 있으나 DB에서 findOne할 때 에러가 나면 next를 에러처리 함수를 호출한다", async () => {
+    const error = new Error();
+    const res = {
+      render: jest.fn(),
+      redirect: jest.fn(),
+    };
+    const next = jest.fn();
+    jest.spyOn(Hashtag, "findOne").mockRejectedValue(error);
+
+    await renderHashtag({ query: { hashtag: "고양이" } }, res, next);
+    expect(res.render).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledWith(error);
+    expect(res.redirect).not.toHaveBeenCalled();
+  });
+
+  it("hashtag 쿼리스트링이 있으나 DB에 해시태그가 없는 경우 빈 화면을 렌더링 한다", async () => {
+    const res = {
+      render: jest.fn(),
+      redirect: jest.fn(),
+    };
+    const next = jest.fn();
+    jest.spyOn(Hashtag, "findOne").mockResolvedValue(null);
+
+    await renderHashtag({ query: { hashtag: "고양이" } }, res, next);
+    expect(res.render).toHaveBeenCalledWith("main", {
+      title: "고양이 | NodeBird",
+      twits: [],
+    });
+    expect(next).not.toHaveBeenCalled();
+    expect(res.redirect).not.toHaveBeenCalled();
+  });
+
+  it("hashtag 쿼리스트링이 있고 DB에 해시태그가 있는 경우 그 게시글을 화면에 렌더링 한다", async () => {
+    const res = {
+      render: jest.fn(),
+      redirect: jest.fn(),
+    };
+    const next = jest.fn();
+    jest
+      .spyOn(Hashtag, "findOne")
+      .mockResolvedValue({ id: 5, getPosts: () => [{ id: 1 }, { id: 2 }] });
+
+    await renderHashtag({ query: { hashtag: "고양이" } }, res, next);
+    expect(res.render).toHaveBeenCalledWith("main", {
+      title: "고양이 | NodeBird",
+      twits: [{ id: 1 }, { id: 2 }],
+    });
+    expect(next).not.toHaveBeenCalled();
+    expect(res.redirect).not.toHaveBeenCalled();
   });
 });
