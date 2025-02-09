@@ -1,4 +1,4 @@
-const { join } = require("./auth");
+const { join, logout } = require("./auth");
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
 
@@ -125,3 +125,18 @@ describe("join", () => {
 });
 
 describe("login", () => {});
+
+describe("logout", () => {
+  it("로그아웃 시에는 req.logout 호출 후 /로 되돌려 보낸다", () => {
+    const req = {
+      logout: jest.fn((cb) => cb()),
+    };
+    const res = {
+      redirect: jest.fn(),
+    };
+
+    logout(req, res);
+    expect(req.logout).toHaveBeenCalled();
+    expect(res.redirect).toHaveBeenCalledWith("/");
+  });
+});
