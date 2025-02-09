@@ -1,6 +1,8 @@
-const { join, logout } = require("./auth");
+const { join, logout, login, localCallback } = require("./auth");
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
+const passport = require("passport");
+const res = require("express/lib/response");
 
 describe("join", () => {
   it("이메일이 없으면 프론트로 no_email 에러를 쿼리스트링으로 보낸다", async () => {
@@ -124,7 +126,74 @@ describe("join", () => {
   });
 });
 
-describe("login", () => {});
+describe("login", () => {
+  it("로그인 함수는 passport.authenticate 함수를 실행한다", () => {
+    jest.spyOn(passport, "authenticate").mockImplementation(() => () => {});
+
+    const req = {};
+    const res = {};
+    const next = () => {};
+
+    login(req, res, next);
+    expect(passport.authenticate).toHaveBeenCalledTimes(1);
+  });
+
+  it("로컬 로그인 시 에러가 있으면 에러처리함수로 에러를 넘긴다", () => {
+    const authError = new Error();
+
+    const req = {};
+    const res = {};
+    const next = jest.fn();
+
+    localCallback(req, res, next)(authError);
+    expect(next).toHaveBeenCalledWith(authError);
+  });
+
+  it("로컬 로그인 시 에러가 없지만 유저도 없으면 프론트 쿼리스트링으로 에러를 보낸다", () => {
+    const req = {};
+    const res = {
+      redirect: jest.fn(),
+    };
+    const next = jest.fn();
+
+    localCallback(req, res, next)(null, null, { message: "유저 없음" });
+    expect(res.redirect).toHaveBeenCalledWith("/?error=유저 없음");
+  });
+
+  it("로컬 로그인은 성공했는데 req.login에서 에러가 있으면 에러처리 함수로 에러를 보낸다", () => {
+    const loginError = new Error();
+    const req = {
+      login: jest.fn((user, cb) => {
+        cb(loginError);
+      }),
+    };
+    const res = {
+      redirect: jest.fn(),
+    };
+    const next = jest.fn();
+
+    localCallback(req, res, next)(null, {}, null);
+    expect(req.login).toHaveBeenCalledTimes(1);
+    expect(next).toHaveBeenCalledWith(loginError);
+  });
+
+  it("로컬 로그인은 성공했고 req.login에도 에러가 없으면 프론트 /로 돌려보낸다", () => {
+    const req = {
+      login: jest.fn((user, cb) => {
+        cb();
+      }),
+    };
+    const res = {
+      redirect: jest.fn(),
+    };
+    const next = jest.fn();
+
+    localCallback(req, res, next)(null, {}, null);
+    expect(req.login).toHaveBeenCalledTimes(1);
+    expect(res.redirect).toHaveBeenCalledWith("/");
+    expect(next).not.toHaveBeenCalled();
+  });
+});
 
 describe("logout", () => {
   it("로그아웃 시에는 req.logout 호출 후 /로 되돌려 보낸다", () => {
