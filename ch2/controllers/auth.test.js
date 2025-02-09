@@ -1,4 +1,5 @@
 const { join } = require("./auth");
+const User = require("../models/user");
 
 describe("join", () => {
   it("이메일이 없으면 프론트로 no_email 에러를 쿼리스트링으로 보낸다", async () => {
@@ -57,10 +58,16 @@ describe("join", () => {
         password: "test0!",
       },
     };
-    const res = {};
+    const res = {
+      redirect: jest.fn(),
+    };
     const next = () => {};
-    join(req, res, next);
-    expect();
+    jest.spyOn(User, "findOne").mockResolvedValue({ id: 1 });
+    jest.spyOn(User, "create").mockImplementation();
+
+    await join(req, res, next);
+    expect(res.redirect).toHaveBeenCalledWith("/join?error=exist");
+    expect(User.create).not.toHaveBeenCalled();
   });
 
   it("회원가입 도중에 에러가 발생하면 에러를 응답한다", () => {});
