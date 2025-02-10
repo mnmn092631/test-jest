@@ -1,11 +1,25 @@
 const { sequelize } = require("./models");
 
+jest.mock("express", () => {
+  const app = jest.requireActual("express")();
+  jest.spyOn(app, "listen").mockImplementation();
+  const express = () => app;
+  Object.assign(express, jest.requireActual("express"));
+  return express;
+});
+
 beforeEach(() => {
   jest.resetModules();
 });
 
 it("app.js가 실행될 때 sequelize.sync가 성공하면 then을 호출한다", () => {
-  jest.spyOn(sequelize, "sync").mockResolvedValue(Promise.resolve());
+  jest.spyOn(sequelize, "sync").mockResolvedValue(undefined);
+  const app = require("./app");
+  expect(app).toBeDefined();
+});
+
+it("app.js가 실행될 때 sequelize.sync가 실패하면 catch를 호출한다", () => {
+  jest.spyOn(sequelize, "sync").mockRejectedValue(new Error());
   const app = require("./app");
   expect(app).toBeDefined();
 });
@@ -22,11 +36,12 @@ it("notFoundHandler가 잘 실행된다", () => {
 
 it("NODE_ENV가 production이 아닐 때 errorHandler가 error와 함께 실행된다", () => {
   const { errorHandler } = require("./app");
-  const error = new Error();
-  error.message = "메시지1";
+  const error = new Error("메시지1");
   error.status = 503;
   const res = {
     locals: {},
+    status: jest.fn(),
+    render: jest.fn(),
   };
 
   errorHandler(error, {}, res);
@@ -39,10 +54,11 @@ it("NODE_ENV가 production이 아닐 때 errorHandler가 error와 함께 실행�
 it("NODE_ENV가 production일 때 errorHandler가 error 없이 실행된다", () => {
   process.env.NODE_ENV = "production";
   const { errorHandler } = require("./app");
-  const error = new Error();
-  error.message = "메시지2";
+  const error = new Error("메시지2");
   const res = {
     locals: {},
+    status: jest.fn(),
+    render: jest.fn(),
   };
 
   errorHandler(error, {}, res);
@@ -52,15 +68,14 @@ it("NODE_ENV가 production일 때 errorHandler가 error 없이 실행된다", ()
   expect(res.render).toHaveBeenCalledWith("error");
 });
 
-it("app.js가 실행될 때 sequelize.sync가 실패하면 catch를 호출한다", () => {
-  jest.spyOn(sequelize, "sync").mockRejectedValue(Promise.reject());
-  const app = require("./app");
-  expect(app).toBeDefined();
-});
-
 it("listenCallback이 잘 실행된다", () => {
   const { listenCallback } = require("./app");
-  expect(listenCallback).toBe(undefined);
+  expect(listenCallback()).toBe(undefined);
+});
+
+it("syncSuccess가 잘 실행된다", () => {
+  const { syncSuccess } = require("./app");
+  expect(syncSuccess()).toBe(undefined);
 });
 
 afterEach(() => {

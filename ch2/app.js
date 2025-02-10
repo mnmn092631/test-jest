@@ -23,14 +23,13 @@ nunjucks.configure("views", {
   express: app,
   watch: true,
 });
-sequelize
-  .sync({ force: false })
-  .then(() => {
-    console.log("데이터베이스 연결 성공");
-  })
-  .catch((err) => {
-    console.error(err);
-  });
+
+const syncSuccess = () => {
+  console.log("데이터베이스 연결 성공");
+};
+exports.syncSuccess = syncSuccess;
+
+sequelize.sync({ force: false }).then(syncSuccess).catch(console.error);
 
 app.use(morgan("dev"));
 app.use(express.static(path.join(__dirname, "public")));
@@ -80,4 +79,4 @@ const listenCallback = () => {
 exports.listenCallback = listenCallback;
 app.listen(app.get("port"), listenCallback);
 
-module.exports = app;
+exports.app = app;
