@@ -21,7 +21,8 @@ app.set("port", process.env.PORT || 8001);
 app.set("view engine", "html");
 nunjucks.configure("views", {
   express: app,
-  watch: true,
+  // watch: true, -> test leak의 원인
+  watch: process.env.NODE_ENV !== "test",
 });
 
 const syncSuccess = () => {
@@ -77,6 +78,5 @@ const listenCallback = () => {
   console.log(app.get("port"), "번 포트에서 대기중");
 };
 exports.listenCallback = listenCallback;
-app.listen(app.get("port"), listenCallback);
 
 exports.app = app;
